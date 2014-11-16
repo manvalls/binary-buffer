@@ -1,0 +1,23 @@
+{
+  "name": "binary-buffer",
+  "version": "0.0.0",
+  "description": "Yet another binary buffer",
+  "main": "main.js",
+  "dependencies": {
+    "vz.rand": "",
+    "vz.walk": "",
+    "vz.yielded": ""
+  },
+  "devDependencies": {
+    
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/manvalls/binary-buffer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/manvalls/binary-buffer/issues"
+  },
+  "author": "Manuel Valls Fernández <manolo@chatiku.com>",
+  "license": "LGPL-3.0"
+}
