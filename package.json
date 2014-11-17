@@ -1,6 +1,6 @@
 {
   "name": "binary-buffer",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Yet another binary buffer",
   "main": "main.js",
   "dependencies": {
@@ -8,9 +8,7 @@
     "vz.walk": "",
     "vz.yielded": ""
   },
-  "devDependencies": {
-    
-  },
+  "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "git://github.com/manvalls/binary-buffer.git"
