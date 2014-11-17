@@ -5,8 +5,9 @@ var Su = require('vz.rand').Su,
     
     size = Su(),
     parts = Su(),
-    waiting = Su(),
     queue = Su(),
+    asyncParts = Su(),
+    locked = Su(),
     buffer = Su(),
     
     BinaryBuffer,
@@ -18,9 +19,11 @@ BinaryBuffer = module.exports = function BinaryBuffer(){
   var i;
   
   this[size] = 0;
+  this[asyncParts] = 0;
   this[parts] = [];
+  
   this[queue] = [];
-  this[waiting] = this[queue].shift();
+  this[locked] = false;
   
   for(i = 0;i < arguments.length;i++) this.write(arguments[i]);
 };
@@ -30,14 +33,10 @@ BinaryBuffer = module.exports = function BinaryBuffer(){
 function waitForData(size,buff){
   var yd = new Yielded();
   
-  if(buff[waiting] || buff[queue].length) buff[queue].push({
+  if(buff[locked] || buff.size < size) buff[queue].push({
     yielded: yd,
     size: size
   });
-  else if(buff.size < size) buff[waiting] = {
-    yielded: yd,
-    size: size
-  };
   else yd.done = true;
   
   return yd;
@@ -53,13 +52,17 @@ function getParts(buff,sz){
     data = buff[parts];
     buff[parts] = [];
     buff[size] = 0;
+    buff[asyncParts] = 0;
   }else{
     data = [];
     buff[size] -= sz;
     
     while(sz > 0){
       part = buff[parts].shift();
+      
+      if(part.async) buff[asyncParts]--;
       sz -= part.size;
+      
       data.push(part);
     }
     
@@ -68,6 +71,8 @@ function getParts(buff,sz){
       partsSlice = part.slice(0,part.size + sz);
       buffSlice = part.slice(part.size + sz,part.size);
       
+      if(buffSlice.async) buff[asyncParts]++;
+      
       data.push(partsSlice);
       buff[parts].unshift(buffSlice);
     }
@@ -75,6 +80,56 @@ function getParts(buff,sz){
   }
   
   return data;
+}
+
+function* prepare(buff,size){
+  var i = 0,
+      to,
+      part,
+      
+      asyncPart,
+      syncPart;
+  
+  while(size > 0){
+    part = buff[parts][i];
+    
+    if(part.async && part.size > size){
+      
+      to = Math.min(Math.max(size,10e3),part.size);
+      buff[parts].splice(i,1);
+      
+      if(to < part.size){
+        
+        syncPart = part.slice(0,to);
+        asyncPart = part.slice(to,part.size);
+        
+        syncPart = yield syncPart.getArrayLike();
+        syncPart = new Part(syncPart);
+        
+        buff[parts].splice(i,0,syncPart,asyncPart);
+        
+      }else{
+        
+        buff[asyncParts]--;
+        
+        syncPart = yield part.getArrayLike();
+        syncPart = new Part(syncPart);
+        
+        buff[parts].splice(i,0,syncPart);
+        
+      }
+      
+      break;
+    }
+    
+    i++;
+    size -= part.size;
+  }
+  
+}
+
+function needsPreparation(buff,type){
+  return buff[asyncParts] > 0 && type != Blob;
 }
 
 function* read(buff,type,size){
@@ -86,6 +141,9 @@ function* read(buff,type,size){
       ret;
   
   yield waitForData(size,buff);
+  buff[locked] = true;
+  
+  if(needsPreparation(buff,type)) yield walk(prepare,[buff,size]);
   
   data = getParts(buff,size);
   
@@ -135,11 +193,11 @@ function onConsumed(){
   var buff = this[buffer],
       first;
   
-  if(buff[queue].length){
-    first = buff[queue].shift();
-    
+  buff[locked] = false;
+  
+  if(first = buff[queue].shift()){
     if(buff.size >= first.size) first.yielded.done = true;
-    else buff[waiting] = first;
+    else buff[queue].unshift(first);
   }
   
 }
@@ -150,21 +208,25 @@ Object.defineProperties(BinaryBuffer.prototype,{
   
   write: {value: function(data){
     var part,
+        first,
         yd;
     
     if(data.constructor == BinaryBuffer){
       this[parts] = this[parts].concat(data[parts]);
       this[size] += data[size];
+      this[asyncParts] += data[asyncParts];
     }else{
       part = new Part(data);
+      
       this[size] += part.size;
+      if(part.async) this[asyncParts]++;
+      
       this[parts].push(part);
     }
     
-    if(this[waiting] && this[size] >= this[waiting].size){
-      yd = this[waiting].yielded;
-      this[waiting] = null;
-      yd.done = true;
+    if(first = this[queue].shift()){
+      if(this[size] >= first.size) first.yielded.done = true;
+      else this[queue].unshift(first);
     }
     
   }},
