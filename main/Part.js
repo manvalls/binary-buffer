@@ -16,7 +16,11 @@ var ArrayPart = require('./Part/ArrayPart.js'),
     BlobPart = require('./Part/BlobPart.js'),
     ArrayBufferPart = require('./Part/ArrayBufferPart.js'),
     Uint8ArrayPart = require('./Part/Uint8ArrayPart.js'),
-    ArrayBufferViewPart = require('./Part/ArrayBufferViewPart.js');
+    ArrayBufferViewPart = require('./Part/ArrayBufferViewPart.js'),
+    
+    File = global.File,
+    Blob = global.Blob,
+    Buffer = global.Buffer;
 
 module.exports = function Part(data){
   
