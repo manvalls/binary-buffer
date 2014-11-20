@@ -25,6 +25,7 @@ var ArrayPart = require('./Part/ArrayPart.js'),
 module.exports = function Part(data){
   
   switch(data.constructor){
+    case Number:              data = [data];
     case Array:               return new ArrayPart(data);
     case Buffer:              return new BufferPart(data);
     case File:
