@@ -46,10 +46,13 @@ function getParts(buff,sz){
   var data,
       part,
       partsSlice,
-      buffSlice;
+      buffSlice,
+      ap = 0;
   
   if(sz == buff.size){
     data = buff[parts];
+    ap = buff[asyncParts];
+    
     buff[parts] = [];
     buff[size] = 0;
     buff[asyncParts] = 0;
@@ -60,7 +63,11 @@ function getParts(buff,sz){
     while(sz > 0){
       part = buff[parts].shift();
       
-      if(part.async) buff[asyncParts]--;
+      if(part.async){
+        buff[asyncParts]--;
+        ap++;
+      }
+      
       sz -= part.size;
       
       data.push(part);
@@ -79,7 +86,7 @@ function getParts(buff,sz){
     
   }
   
-  return data;
+  return [data,ap];
 }
 
 function* prepare(buff,size){
@@ -132,20 +139,23 @@ function needsPreparation(buff,type){
   return buff[asyncParts] > 0 && type != Blob;
 }
 
-function* read(buff,type,size){
+function* read(buff,type,sz){
   var data,
+      ap,
       
       offset,
       part,
       i,
       ret;
   
-  yield waitForData(size,buff);
+  yield waitForData(sz,buff);
   buff[locked] = true;
   
-  if(needsPreparation(buff,type)) yield walk(prepare,[buff,size]);
+  if(needsPreparation(buff,type)) yield walk(prepare,[buff,sz]);
   
-  data = getParts(buff,size);
+  data = getParts(buff,sz);
+  ap = data[1];
+  data = data[0];
   
   switch(type){
     
@@ -166,9 +176,9 @@ function* read(buff,type,size){
     // Uint8Array
     
     case Uint8ClampedArray:
-      ret = new Uint8ClampedArray(size);
+      ret = new Uint8ClampedArray(sz);
     case Uint8Array:
-      ret = ret || new Uint8Array(size);
+      ret = ret || new Uint8Array(sz);
       offset = 0;
       
       for(i = 0;i < data.length;i++){
@@ -177,6 +187,15 @@ function* read(buff,type,size){
         offset += part.length;
       }
       
+      break;
+    
+    // Number
+    
+    case BinaryBuffer:
+      ret = new BinaryBuffer();
+      ret[size] = sz;
+      ret[parts] = data;
+      ret[asyncParts] = ap;
       break;
     
     // Unsupported
