@@ -189,7 +189,7 @@ function* read(buff,type,sz){
       
       break;
     
-    // Number
+    // BinaryBuffer
     
     case BinaryBuffer:
       ret = new BinaryBuffer();
