@@ -139,12 +139,21 @@ function needsPreparation(buff,type){
   return buff[asyncParts] > 0 && type != Blob;
 }
 
+function* populate(array,data){
+  var offset = 0,i,part;
+  
+  for(i = 0;i < data.length;i++){
+    part = yield data[i].getArrayLike();
+    array.set(part,offset);
+    offset += part.length;
+  }
+  
+}
+
 function* read(buff,type,sz){
   var data,
       ap,
       
-      offset,
-      part,
       i,
       ret;
   
@@ -179,14 +188,15 @@ function* read(buff,type,sz){
       ret = new Uint8ClampedArray(sz);
     case Uint8Array:
       ret = ret || new Uint8Array(sz);
-      offset = 0;
-      
-      for(i = 0;i < data.length;i++){
-        part = yield data[i].getArrayLike();
-        ret.set(part,offset);
-        offset += part.length;
-      }
-      
+      yield walk(populate,[ret,data]);
+      break;
+    
+    // ArrayBuffer
+    
+    case ArrayBuffer:
+      ret = new Uint8Array(sz);
+      yield walk(populate,[ret,data]);
+      ret = ret.buffer;
       break;
     
     // BinaryBuffer
