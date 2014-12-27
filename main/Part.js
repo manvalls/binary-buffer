@@ -27,12 +27,17 @@ module.exports = function Part(data){
   switch(data.constructor){
     case Number:              data = [data];
     case Array:               return new ArrayPart(data);
+    
     case Buffer:              return new BufferPart(data);
+    
     case File:
     case Blob:                return new BlobPart(data);
+    
     case ArrayBuffer:         return new ArrayBufferPart(data);
+    
     case Uint8ClampedArray:
     case Uint8Array:          return new Uint8ArrayPart(data);
+    
     case Uint16Array:
     case Uint32Array:
     case Int8Array:

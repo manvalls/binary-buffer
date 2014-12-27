@@ -128,9 +128,17 @@ Object.defineProperties(BinaryBuffer.prototype,{
     return this[total];
   }},
   
-  drain: {get: walk.wrap(function*(yarr){
+  drain: {get: walk.wrap(function*(yarr,type){
     var data;
-    while(data = yield yarr.shift()) yield this.write(data);
+    
+    if(yarr.isYarr) while(data = yield yarr.shift()) yield this.write(data);
+    else{
+      if(Buffer) type = type || Buffer;
+      else type = type || Uint8Array;
+      
+      while(data = yield yarr.read(type)) yield this.write(data);
+    }
+    
   })}
   
 });
