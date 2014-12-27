@@ -6,7 +6,8 @@
   "dependencies": {
     "vz.rand": "",
     "vz.walk": "",
-    "vz.yielded": ""
+    "vz.yielded": "",
+    "vz.yarr": ""
   },
   "devDependencies": {},
   "repository": {
