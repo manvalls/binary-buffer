@@ -8,6 +8,7 @@ var Su = require('vz.rand').Su,
     current = Su(),
     total = Su(),
     lock = Su(),
+    open = Su(),
     
     BinaryBuffer,
     
@@ -21,6 +22,7 @@ BinaryBuffer = module.exports = function BinaryBuffer(){
   this[parts] = new Yarr();
   this[total] = 0;
   this[lock] = new Yarr();
+  this[open] = true;
   
   this[lock].push(true);
 };
@@ -40,6 +42,8 @@ Object.defineProperties(BinaryBuffer.prototype,{
   
   write: {value: function(data){
     var part = new Part(data);
+    
+    if(!this[open]) throw new Error('Cannot write to a closed BinaryBuffer');
     this[total] += part.size;
     
     return this[parts].push(part);
@@ -55,9 +59,17 @@ Object.defineProperties(BinaryBuffer.prototype,{
     yield this[lock].shift();
     
     size = size || this[total];
-    sz = size;
     
     part = this[current] || (yield this[parts].shift());
+    if(!part){
+      this[total] = 0;
+      this[lock].push(true);
+      return null;
+    }
+    
+    size = size || part.size;
+    sz = size;
+    
     size -= part.size;
     data.push(part);
     
@@ -65,6 +77,12 @@ Object.defineProperties(BinaryBuffer.prototype,{
     
     while(size > 0){
       part = yield this[parts].shift();
+      if(!part){
+        this[total] = 0;
+        this[lock].push(true);
+        return null;
+      }
+      
       size -= part.size;
       data.push(part);
     }
@@ -118,7 +136,6 @@ Object.defineProperties(BinaryBuffer.prototype,{
     }
     
     this[total] -= sz;
-    
     this[lock].push(true);
     
     return ret;
@@ -139,7 +156,21 @@ Object.defineProperties(BinaryBuffer.prototype,{
       while(data = yield yarr.read(type)) yield this.write(data);
     }
     
-  })}
+  })},
+  
+  open: {
+    get: function(){
+      return this[open];
+    },
+    set: walk.wrap(function*(v){
+      
+      if(this[open] && v === false){
+        this[open] = false;
+        while(true) yield this[parts].push(null);
+      }
+      
+    })
+  }
   
 });
 
