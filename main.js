@@ -78,9 +78,9 @@ Object.defineProperties(BinaryBuffer.prototype,{
     while(size > 0){
       part = yield this[parts].shift();
       if(!part){
-        this[total] = 0;
-        this[lock].push(true);
-        return null;
+        size = 0;         // Straight to the type switch
+        sz = this[total]; // The new size must be zero
+        break;
       }
       
       size -= part.size;
