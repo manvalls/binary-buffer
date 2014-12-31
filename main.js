@@ -56,6 +56,21 @@ Object.defineProperties(BinaryBuffer.prototype,{
         part,
         point;
     
+    if(size == undefined){
+      
+      switch(typeof type){
+        case 'number':
+          size = type;
+          type = Buffer || Uint8Array;
+          break;
+        case 'undefined':
+          size = 0;
+          type = Buffer || Uint8Array;
+          break;
+      }
+      
+    }
+    
     yield this[lock].shift();
     
     size = size || this[total];
