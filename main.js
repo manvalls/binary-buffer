@@ -56,7 +56,7 @@ Object.defineProperties(BinaryBuffer.prototype,{
         part,
         point;
     
-    if(size == undefined){
+    if(arguments.length < 2){
       
       switch(typeof type){
         case 'number':
@@ -64,7 +64,6 @@ Object.defineProperties(BinaryBuffer.prototype,{
           type = Buffer || Uint8Array;
           break;
         case 'undefined':
-          size = 0;
           type = Buffer || Uint8Array;
           break;
       }
@@ -165,9 +164,7 @@ Object.defineProperties(BinaryBuffer.prototype,{
     
     if(yarr.isYarr) while(data = yield yarr.shift()) yield this.write(data);
     else{
-      if(Buffer) type = type || Buffer;
-      else type = type || Uint8Array;
-      
+      type = type || Buffer || Uint8Array;
       while(data = yield yarr.read(type)) yield this.write(data);
     }
     
