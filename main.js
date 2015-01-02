@@ -7,7 +7,8 @@ var Su = require('vz.rand').Su,
     parts = Su(),
     current = Su(),
     total = Su(),
-    lock = Su(),
+    readLock = Su(),
+    writeLock = Su(),
     open = Su(),
     
     BinaryBuffer,
@@ -21,10 +22,14 @@ BinaryBuffer = module.exports = function BinaryBuffer(){
   this[current] = null;
   this[parts] = new Yarr();
   this[total] = 0;
-  this[lock] = new Yarr();
-  this[open] = true;
   
-  this[lock].push(true);
+  this[readLock] = new Yarr();
+  this[writeLock] = new Yarr();
+  
+  this[readLock].push(true);
+  this[writeLock].push(true);
+  
+  this[open] = true;
 };
 
 populate = walk.wrap(function*(array,data){
@@ -40,14 +45,26 @@ populate = walk.wrap(function*(array,data){
 
 Object.defineProperties(BinaryBuffer.prototype,{
   
-  write: {value: function(data){
-    var part = new Part(data);
+  write: {value: walk.wrap(function*(data){
+    var part,yd;
     
     if(!this[open]) throw new Error('Cannot write to a closed BinaryBuffer');
-    this[total] += part.size;
     
-    return this[parts].push(part);
-  }},
+    if(data.isYarr){
+      yield this.drain(data);
+      return;
+    }
+    
+    yield this[writeLock].shift();
+    
+    part = new Part(data);
+    this[total] += part.size;
+    yd = this[parts].push(part);
+    
+    this[writeLock].push(true);
+    
+    yield yd;
+  })},
   
   read: {value: walk.wrap(function*(type,size){
     var data = [],
@@ -70,14 +87,14 @@ Object.defineProperties(BinaryBuffer.prototype,{
       
     }
     
-    yield this[lock].shift();
+    yield this[readLock].shift();
     
     size = size || this[total];
     
     part = this[current] || (yield this[parts].shift());
     if(!part){
       this[total] = 0;
-      this[lock].push(true);
+      this[readLock].push(true);
       return null;
     }
     
@@ -150,7 +167,7 @@ Object.defineProperties(BinaryBuffer.prototype,{
     }
     
     this[total] -= sz;
-    this[lock].push(true);
+    this[readLock].push(true);
     
     return ret;
   })},
@@ -162,11 +179,15 @@ Object.defineProperties(BinaryBuffer.prototype,{
   drain: {get: walk.wrap(function*(yarr,type){
     var data;
     
+    yield this[writeLock].shift();
+    
     if(yarr.isYarr) while(data = yield yarr.shift()) yield this.write(data);
     else{
       type = type || Buffer || Uint8Array;
       while(data = yield yarr.read(type)) yield this.write(data);
     }
+    
+    this[writeLock].push(true);
     
   })},
   
