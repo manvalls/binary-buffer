@@ -176,7 +176,7 @@ Object.defineProperties(BinaryBuffer.prototype,{
     return this[total];
   }},
   
-  drain: {get: walk.wrap(function*(yarr,type){
+  drain: {value: walk.wrap(function*(yarr,type){
     var data;
     
     yield this[writeLock].shift();
@@ -189,21 +189,7 @@ Object.defineProperties(BinaryBuffer.prototype,{
     
     this[writeLock].push(true);
     
-  })},
-  
-  open: {
-    get: function(){
-      return this[open];
-    },
-    set: walk.wrap(function*(v){
-      
-      if(this[open] && v === false){
-        this[open] = false;
-        while(true) yield this[parts].push(null);
-      }
-      
-    })
-  }
+  })}
   
 });
 
