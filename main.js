@@ -7,8 +7,6 @@ var Su = require('vz.rand').Su,
     parts = Su(),
     current = Su(),
     total = Su(),
-    readLock = Su(),
-    writeLock = Su(),
     open = Su(),
     
     BinaryBuffer,
@@ -22,13 +20,6 @@ BinaryBuffer = module.exports = function BinaryBuffer(){
   this[current] = null;
   this[parts] = new Yarr();
   this[total] = 0;
-  
-  this[readLock] = new Yarr();
-  this[writeLock] = new Yarr();
-  
-  this[readLock].push(true);
-  this[writeLock].push(true);
-  
   this[open] = true;
 };
 
@@ -55,15 +46,10 @@ Object.defineProperties(BinaryBuffer.prototype,{
       return;
     }
     
-    yield this[writeLock].shift();
-    
     part = new Part(data);
     this[total] += part.size;
-    yd = this[parts].push(part);
+    yield this[parts].push(part);
     
-    this[writeLock].push(true);
-    
-    yield yd;
   })},
   
   read: {value: walk.wrap(function*(type,size){
@@ -87,14 +73,11 @@ Object.defineProperties(BinaryBuffer.prototype,{
       
     }
     
-    yield this[readLock].shift();
-    
     size = size || this[total];
     
     part = this[current] || (yield this[parts].shift());
     if(!part){
       this[total] = 0;
-      this[readLock].push(true);
       return null;
     }
     
@@ -167,7 +150,6 @@ Object.defineProperties(BinaryBuffer.prototype,{
     }
     
     this[total] -= sz;
-    this[readLock].push(true);
     
     return ret;
   })},
@@ -179,15 +161,11 @@ Object.defineProperties(BinaryBuffer.prototype,{
   drain: {value: walk.wrap(function*(yarr,type){
     var data;
     
-    yield this[writeLock].shift();
-    
     if(yarr.isYarr) while(data = yield yarr.shift()) yield this.write(data);
     else{
       type = type || Buffer || Uint8Array;
       while(data = yield yarr.read(type)) yield this.write(data);
     }
-    
-    this[writeLock].push(true);
     
   })}
   
