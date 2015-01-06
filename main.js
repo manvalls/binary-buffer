@@ -36,6 +36,8 @@ populate = walk.wrap(function*(array,data){
 
 Object.defineProperties(BinaryBuffer.prototype,{
   
+  isBinaryBuffer: {value: true},
+  
   write: {value: walk.wrap(function*(data){
     var part,yd;
     
@@ -165,6 +167,26 @@ Object.defineProperties(BinaryBuffer.prototype,{
     else{
       type = type || Buffer || Uint8Array;
       while(data = yield yarr.read(type)) yield this.write(data);
+    }
+    
+  })},
+  
+  pipe: {value: walk.wrap(function*(){
+    var type,
+        max = arguments.length - 1,
+        data,
+        i;
+    
+    type = arguments[max];
+    
+    if(type.isYarr || type.isBinaryBuffer){
+      type = Buffer || Uint8Array;
+      max++;
+    }
+    
+    while(data = yield this.read(type)) for(i = 0;i < max;i++){
+      if(arguments[i].isYarr) yield arguments[i].write(data);
+      else yield arguments[i].push(data);
     }
     
   })}
