@@ -5,7 +5,6 @@ var Su = require('vz.rand').Su,
     Part = require('./main/Part.js'),
     
     parts = Su(),
-    current = Su(),
     total = Su(),
     open = Su(),
     
@@ -14,10 +13,10 @@ var Su = require('vz.rand').Su,
     Blob = global.Blob,
     Buffer = global.Buffer,
     
-    populate;
+    populate,
+    pipe;
 
 BinaryBuffer = module.exports = function BinaryBuffer(){
-  this[current] = null;
   this[parts] = new Yarr();
   this[total] = 0;
   this[open] = true;
@@ -34,17 +33,32 @@ populate = walk.wrap(function*(array,data){
   
 });
 
+pipe = walk.wrap(function*(buff,type,yarr){
+  
+  while(true){
+    yield yarr.untilQueued()
+    yield yarr.write(yield buff.read(type));
+  }
+  
+});
+
 Object.defineProperties(BinaryBuffer.prototype,{
   
   isBinaryBuffer: {value: true},
   
   write: {value: walk.wrap(function*(data){
-    var part,yd;
+    var part,yd,yarr;
+    
+    if(data == null){
+      this.open = false;
+      return;
+    }
     
     if(!this[open]) throw new Error('Cannot write to a closed BinaryBuffer');
     
     if(data.isYarr){
-      yield this.drain(data);
+      yarr = data;
+      while(data = yield yarr.shift()) yield this.write(data);
       return;
     }
     
@@ -77,7 +91,7 @@ Object.defineProperties(BinaryBuffer.prototype,{
     
     size = size || this[total];
     
-    part = this[current] || (yield this[parts].shift());
+    part = yield this[parts].shift();
     if(!part){
       this[total] = 0;
       return null;
@@ -88,8 +102,6 @@ Object.defineProperties(BinaryBuffer.prototype,{
     
     size -= part.size;
     data.push(part);
-    
-    this[current] = null;
     
     while(size > 0){
       part = yield this[parts].shift();
@@ -107,7 +119,7 @@ Object.defineProperties(BinaryBuffer.prototype,{
       point = part.size + size;
       
       data.pop();
-      this[current] = part.slice(point);
+      this[parts].unshift(part.slice(point));
       data.push(part.slice(0,point));
     }
     
@@ -160,36 +172,27 @@ Object.defineProperties(BinaryBuffer.prototype,{
     return this[total];
   }},
   
-  drain: {value: walk.wrap(function*(yarr,type){
-    var data;
+  getYarr: {value: function(type){
+    var yarr = new Yarr();
     
-    if(yarr.isYarr) while(data = yield yarr.shift()) yield this.write(data);
-    else{
-      type = type || Buffer || Uint8Array;
-      while(data = yield yarr.read(type)) yield this.write(data);
-    }
+    type = type || Buffer || Uint8Array;
+    pipe(this,type,yarr);
     
-  })},
+    return yarr;
+  }},
   
-  pipe: {value: walk.wrap(function*(){
-    var type,
-        max = arguments.length - 1,
-        data,
-        i;
-    
-    type = arguments[max];
-    
-    if(type.isYarr || type.isBinaryBuffer){
-      type = Buffer || Uint8Array;
-      max++;
+  open: {
+    get: function(){
+      return this[open];
+    },
+    set: function(v){
+      if(!this[open]) return;
+      if(!v){
+        this[open] = false;
+        this[parts].insist(null);
+      }
     }
-    
-    while(data = yield this.read(type)) for(i = 0;i < max;i++){
-      if(arguments[i].isYarr) yield arguments[i].write(data);
-      else yield arguments[i].push(data);
-    }
-    
-  })}
+  }
   
 });
 
