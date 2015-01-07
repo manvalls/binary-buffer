@@ -1,6 +1,6 @@
 {
   "name": "binary-buffer",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "Yet another binary buffer",
   "main": "main.js",
   "dependencies": {
