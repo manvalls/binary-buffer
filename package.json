@@ -1,15 +1,24 @@
 {
   "name": "binary-buffer",
-  "version": "3.0.0",
-  "description": "Yet another binary buffer",
+  "version": "4.0.0",
+  "description": "A stream-like binary buffer",
   "main": "main.js",
   "dependencies": {
-    "vz.rand": "",
-    "vz.walk": "",
-    "vz.yielded": "",
-    "vz.yarr": ""
+    "y-resolver": ""
   },
-  "devDependencies": {},
+
+
+  "devDependencies": {
+    "u-test": "",
+    "y-walk": "",
+    "istanbul": "",
+    "coveralls": "^2"
+  },
+  "scripts": {
+    "test": "bash test.sh"
+  },
+
+
   "repository": {
     "type": "git",
     "url": "git://github.com/manvalls/binary-buffer.git"
@@ -17,6 +26,6 @@
   "bugs": {
     "url": "https://github.com/manvalls/binary-buffer/issues"
   },
-  "author": "Manuel Valls Fernández <manolo@chatiku.com>",
+  "author": "Manuel Valls Fernández <manolo@vlrz.es>",
   "license": "LGPL-3.0"
 }
