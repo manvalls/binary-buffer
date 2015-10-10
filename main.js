@@ -3,6 +3,7 @@
 var Resolver = require('y-resolver'),
     output = Symbol(),
     input = Symbol(),
+    tf = Symbol(),
 
     set = Uint8Array.prototype.set;
 
@@ -11,6 +12,7 @@ class BinaryBuffer{
   constructor(){
     this[output] = [];
     this[input] = [];
+    this[tf] = 0;
   }
 
   write(array){
@@ -99,10 +101,15 @@ class BinaryBuffer{
     var out = this[output],
         o = out[0];
 
+    this[tf]++;
     if(o && o.remaining != o.array.length){
       out.shift();
       o.resolver.accept(getArr(o.array,0,o.array.length - o.remaining));
     }
+  }
+
+  get timesFlushed(){
+    return this[tf];
   }
 
 }

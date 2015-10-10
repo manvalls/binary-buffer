@@ -14,7 +14,10 @@ t('Write first',function(){
       buff.flush();
     });
 
+    assert.strictEqual(buff.timesFlushed,0);
     result = yield buff.read(new Buffer(3));
+    assert.strictEqual(buff.timesFlushed,1);
+
     assert.deepEqual(result,[1,2,3]);
     yield yd;
   });
@@ -25,7 +28,6 @@ t('Write first',function(){
 
     yd = walk(function*(){
       yield buff.write(new Buffer([1,2,3]));
-      written = true;
     });
 
     result = yield buff.read(new Buffer(1));
