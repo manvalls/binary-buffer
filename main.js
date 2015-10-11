@@ -99,13 +99,10 @@ class BinaryBuffer{
 
   flush(){
     var out = this[output],
-        o = out[0];
+        o = out.shift();
 
     this[tf]++;
-    if(o && o.remaining != o.array.length){
-      out.shift();
-      o.resolver.accept(getArr(o.array,0,o.array.length - o.remaining));
-    }
+    if(o) o.resolver.accept(getArr(o.array,0,o.array.length - o.remaining));
   }
 
   get timesFlushed(){
