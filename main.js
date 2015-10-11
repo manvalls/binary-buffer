@@ -59,12 +59,15 @@ class BinaryBuffer{
   read(array){
     var inp = this[input],
         is = [],
-        obj = {
-          array: array,
-          remaining: array.length,
-          resolver: new Resolver()
-        },
-        arr,from,i,j;
+        obj,arr,from,i,j;
+
+    if(typeof array == 'number') array = new Uint8Array(array);
+
+    obj = {
+      array: array,
+      remaining: array.length,
+      resolver: new Resolver()
+    };
 
     while(inp[0] && obj.remaining){
       i = inp[0];

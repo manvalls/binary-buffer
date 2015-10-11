@@ -117,7 +117,7 @@ t('Read first',function(){
         result,yd;
 
     yd = walk(function*(){
-      result = yield buff.read(new Uint8Array(3));
+      result = yield buff.read(3);
       assert.deepEqual(result,[1,2]);
     });
 
