@@ -4,6 +4,7 @@ var Resolver = require('y-resolver'),
     output = Symbol(),
     input = Symbol(),
     tf = Symbol(),
+    bytes = Symbol(),
 
     set = Uint8Array.prototype.set;
 
@@ -13,6 +14,7 @@ class BinaryBuffer{
     this[output] = [];
     this[input] = [];
     this[tf] = 0;
+    this[bytes] = 0;
   }
 
   write(array){
@@ -24,6 +26,8 @@ class BinaryBuffer{
           resolver: new Resolver()
         },
         arr,from,o,j;
+
+    this[bytes] += array.length;
 
     while(out[0] && obj.remaining){
       from = obj.array.length - obj.remaining;
@@ -71,6 +75,20 @@ class BinaryBuffer{
 
     while(inp[0] && obj.remaining){
       i = inp[0];
+
+      if('flush' in i){
+        this[bytes] -= i.flush;
+        this[tf]++;
+
+        obj.resolver.accept(getArr(obj.array,0,obj.array.length - obj.remaining));
+        for(j = 0;j < is.length;j++){
+          i = is[j];
+          i.resolver.accept(i.array);
+        }
+
+        return obj.resolver.yielded;
+      }
+
       from = i.array.length - i.remaining;
 
       if(obj.remaining >= i.remaining){
@@ -100,16 +118,28 @@ class BinaryBuffer{
     return obj.resolver.yielded;
   }
 
+  fakeFlush(){
+    this[bytes] = 0;
+    this[tf]++;
+  }
+
   flush(){
     var out = this[output],
         o = out.shift();
 
-    this[tf]++;
-    if(o) o.resolver.accept(getArr(o.array,0,o.array.length - o.remaining));
+    if(o){
+      o.resolver.accept(getArr(o.array,0,o.array.length - o.remaining));
+      this[bytes] = 0;
+      this[tf]++;
+    }else this[input].push({flush: this[bytes]});
   }
 
   get timesFlushed(){
     return this[tf];
+  }
+
+  get bytesSinceFlushed(){
+    return this[bytes];
   }
 
 }
