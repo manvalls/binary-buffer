@@ -128,9 +128,9 @@ class BinaryBuffer{
         o = out.shift();
 
     if(o){
-      o.resolver.accept(getArr(o.array,0,o.array.length - o.remaining));
       this[bytes] = 0;
       this[tf]++;
+      o.resolver.accept(getArr(o.array,0,o.array.length - o.remaining));
     }else this[input].push({flush: this[bytes]});
   }
 
