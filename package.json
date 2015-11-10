@@ -4,13 +4,13 @@
   "description": "A stream-like binary buffer",
   "main": "main.js",
   "dependencies": {
-    "y-resolver": ""
+    "y-resolver": "^6.1.0"
   },
   "devDependencies": {
-    "u-test": "",
-    "y-walk": "",
-    "istanbul": "",
-    "coveralls": "^2"
+    "coveralls": "^2.11.4",
+    "istanbul": "^0.4.0",
+    "u-test": "^2.2.3",
+    "y-walk": "^10.0.0"
   },
   "scripts": {
     "test": "bash test.sh"
