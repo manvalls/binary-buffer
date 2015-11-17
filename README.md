@@ -1,4 +1,4 @@
-# BinaryBuffer [![Build Status][travis-img]][travis-url] [![Coverage Status][cover-img]][cover-url]
+# BinaryBuffer [![Build Status][ci-img]][ci-url] [![Coverage Status][cover-img]][cover-url]
 
 ## Sample usage
 
@@ -17,7 +17,7 @@ walk(function*(){
 });
 ```
 
-[travis-img]: https://travis-ci.org/manvalls/binary-buffer.svg?branch=master
-[travis-url]: https://travis-ci.org/manvalls/binary-buffer
+[ci-img]: https://circleci.com/gh/manvalls/binary-buffer.svg?style=shield
+[ci-url]: https://circleci.com/gh/manvalls/binary-buffer
 [cover-img]: https://coveralls.io/repos/manvalls/binary-buffer/badge.svg?branch=master&service=github
 [cover-url]: https://coveralls.io/github/manvalls/binary-buffer?branch=master
