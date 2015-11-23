@@ -22,34 +22,31 @@ class BinaryBuffer{
         os = [],
         obj = {
           array: array,
-          remaining: array.length,
           resolver: new Resolver()
         },
-        arr,from,o,j;
+        arr,o,j;
 
     this[bytes] += array.length;
 
-    while(out[0] && obj.remaining){
-      from = obj.array.length - obj.remaining;
+    while(out[0] && obj.array.length){
       o = out[0];
 
-      if(obj.remaining >= o.remaining){
-        arr = getArr(array,from,from + o.remaining);
+      if(obj.array.length >= o.remaining){
+        arr = getArr(obj.array,0,o.remaining);
         set.call(o.array,arr,o.array.length - o.remaining);
 
-        obj.remaining -= o.remaining;
+        obj.array = getArr(obj.array,o.remaining);
         out.shift();
         os.push(o);
       }else{
-        arr = getArr(array,from,array.length);
-        set.call(o.array,arr,o.array.length - o.remaining);
-        o.remaining -= obj.remaining;
-        obj.remaining = 0;
+        set.call(o.array,obj.array,o.array.length - o.remaining);
+        o.remaining -= obj.array.length;
+        obj.array = [];
       }
 
     }
 
-    if(!obj.remaining) obj.resolver.accept(array);
+    if(!obj.array.length) obj.resolver.accept();
     else this[input].push(obj);
 
     for(j = 0;j < os.length;j++){
@@ -63,7 +60,7 @@ class BinaryBuffer{
   read(array){
     var inp = this[input],
         is = [],
-        obj,arr,from,i,j;
+        obj,arr,i,j;
 
     if(typeof array == 'number') array = new Uint8Array(array);
 
@@ -83,25 +80,22 @@ class BinaryBuffer{
         obj.resolver.accept(getArr(obj.array,0,obj.array.length - obj.remaining));
         for(j = 0;j < is.length;j++){
           i = is[j];
-          i.resolver.accept(i.array);
+          i.resolver.accept();
         }
 
         return obj.resolver.yielded;
       }
 
-      from = i.array.length - i.remaining;
+      if(obj.remaining >= i.array.length){
+        set.call(array,i.array,array.length - obj.remaining);
 
-      if(obj.remaining >= i.remaining){
-        arr = getArr(i.array,from,i.array.length);
-        set.call(array,arr,array.length - obj.remaining);
-
-        obj.remaining -= i.remaining;
+        obj.remaining -= i.array.length;
         inp.shift();
         is.push(i);
       }else{
-        arr = getArr(i.array,from,from + obj.remaining);
+        arr = getArr(i.array,0,obj.remaining);
         set.call(array,arr,array.length - obj.remaining);
-        i.remaining -= obj.remaining;
+        i.array = getArr(i.array,obj.remaining);
         obj.remaining = 0;
       }
 
@@ -112,7 +106,7 @@ class BinaryBuffer{
 
     for(j = 0;j < is.length;j++){
       i = is[j];
-      i.resolver.accept(i.array);
+      i.resolver.accept();
     }
 
     return obj.resolver.yielded;
