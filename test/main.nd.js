@@ -139,4 +139,29 @@ t('Read first',function(){
     yield yd;
   });
 
+  t('autoFlush',function*(){
+    var buff = new BinaryBuffer(),
+        result = new Buffer(0),
+        yd;
+
+    assert.strictEqual(buff.autoFlush,false);
+    buff.autoFlush = false;
+    buff.autoFlush = true;
+    buff.autoFlush = false;
+    buff.autoFlush = true;
+    assert.strictEqual(buff.autoFlush,true);
+    buff.autoFlush = true;
+
+    yd = walk(function*(){
+      while(result.length < 5) result = Buffer.concat([result,yield buff.read(new Buffer(50))]);
+      assert.deepEqual(result,[1,2,3,4,5]);
+    });
+
+    yield buff.write(new Buffer([1]));
+    yield buff.write(new Buffer([2,3]));
+    yield buff.write(new Buffer([4]));
+    yield buff.write(new Buffer([5]));
+    yield yd;
+  });
+
 });

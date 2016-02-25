@@ -5,6 +5,7 @@ var Resolver = require('y-resolver'),
     input = Symbol(),
     tf = Symbol(),
     bytes = Symbol(),
+    autoFlush = Symbol(),
 
     set = Uint8Array.prototype.set;
 
@@ -15,6 +16,7 @@ class BinaryBuffer{
     this[input] = [];
     this[tf] = 0;
     this[bytes] = 0;
+    this[autoFlush] = false;
   }
 
   write(array){
@@ -54,6 +56,7 @@ class BinaryBuffer{
       o.resolver.accept(o.array);
     }
 
+    if(this[autoFlush]) this.flush();
     return obj.resolver.yielded;
   }
 
@@ -76,6 +79,7 @@ class BinaryBuffer{
       if('flush' in i){
         this[bytes] -= i.flush;
         this[tf]++;
+        inp.shift();
 
         obj.resolver.accept(getArr(obj.array,0,obj.array.length - obj.remaining));
         for(j = 0;j < is.length;j++){
@@ -126,6 +130,17 @@ class BinaryBuffer{
       this[tf]++;
       o.resolver.accept(getArr(o.array,0,o.array.length - o.remaining));
     }else this[input].push({flush: this[bytes]});
+  }
+
+  get autoFlush(){
+    return this[autoFlush];
+  }
+
+  set autoFlush(value){
+    value = !!value;
+    if(value == this[autoFlush]) return;
+    this[autoFlush] = value;
+    if(value) this.flush();
   }
 
   get timesFlushed(){
