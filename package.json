@@ -7,7 +7,7 @@
     "y-resolver": "^9.2.1"
   },
   "devDependencies": {
-    "u-test": "^3.6.6",
+    "u-test": "^3.7.0",
     "y-walk": "^10.0.3"
   },
   "scripts": {
