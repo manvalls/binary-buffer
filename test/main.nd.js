@@ -130,7 +130,7 @@ t('Read first',function(){
         result,yd;
 
     yd = walk(function*(){
-      result = yield buff.read(3);
+      result = yield buff.read(new Uint8Array(3));
       assert.deepEqual(result,[1,2]);
     });
 
@@ -153,7 +153,7 @@ t('Read first',function(){
     buff.autoFlush = true;
 
     yd = walk(function*(){
-      while(result.length < 5) result = Buffer.concat([result,yield buff.read(new Buffer(50))]);
+      while(result.length < 5) result = Buffer.concat([result,yield buff.read(50)]);
       assert.deepEqual(result,[1,2,3,4,5]);
     });
 
