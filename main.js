@@ -53,7 +53,7 @@ class BinaryBuffer{
 
     for(j = 0;j < os.length;j++){
       o = os[j];
-      o.resolver.accept(o.array);
+      o.resolver.accept(getArr(o.array,0,o.array.length));
     }
 
     if(this[autoFlush]) this.flush();
