@@ -1,6 +1,6 @@
 {
   "name": "binary-buffer",
-  "version": "5.2.1",
+  "version": "5.2.2",
   "description": "A stream-like binary buffer",
   "main": "main.js",
   "dependencies": {
