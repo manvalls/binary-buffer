@@ -98,14 +98,14 @@ class BinaryBuffer{
       }
 
       if(obj.remaining >= i.array.length){
-        setBytes(array,i.array,array.length - obj.remaining);
+        setBytes(obj.array,i.array,array.length - obj.remaining);
 
         obj.remaining -= i.array.length;
         inp.shift();
         is.push(i);
       }else{
         arr = getArr(i.array,0,obj.remaining);
-        setBytes(array,arr,array.length - obj.remaining);
+        setBytes(obj.array,arr,array.length - obj.remaining);
         i.array = getArr(i.array,obj.remaining);
         obj.remaining = 0;
       }
